@@ -274,4 +274,4 @@ cor(logwage,age)
 
 
 
-
+ 
