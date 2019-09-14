@@ -1,2 +1,2 @@
-# Advanced-Methods-of-Empirical-Economic-Researc
-Application orientedprojectwith R
+# Advanced-Methods-of-Empirical-Economic-Research
+Application oriented project with R
