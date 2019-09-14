@@ -1,0 +1,13 @@
+#### Simulation of a data for nonparametric regression
+#### Please use your own registration number 
+MyMatrNr=234567     ####Please use your Matrikelnummer here!
+set.seed(MyMatrNr)  
+#### The generated data are unified for you and
+#### stay unchanged if you run the program again 
+n0=500                        ###number of observations
+X=((1:n0)-0.5)/n0             ###X-values in (0, 1)
+g= 50*X+30*exp(-30*(X-0.5)^2)-30 ###the trend function
+e=rnorm(n0)*20                  ###the error terms, depending on your Matrikelnummer
+Y=g+e
+
+################## Start your own code from here

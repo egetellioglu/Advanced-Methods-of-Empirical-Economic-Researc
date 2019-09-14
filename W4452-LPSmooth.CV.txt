@@ -1,0 +1,77 @@
+#### Local polynomial smoothing using CV
+LPSmooth.CV=function(X, Y, p, mu.K)
+ {n=length(X)     #### Number of observations
+################ Define the range of all bandwidths
+if(p==1){h.min=0.01}  ###The minimal  bandwidth for p=1
+if(p==2){h.min=0.01}  ###The minimal  bandwidth for p=2
+if(p==3){h.min=0.10}  ###The minimal  bandwidth for p=3
+h.max=0.30       ###The maximal  bandwidth
+h.del=0.01        ### grid for between two bandwidths, 2%
+m=(h.max-h.min)/h.del+1     ### number of different bandwidths
+m1=m-1
+h.all=h.min+(0:m1)*h.del ###All bandwidths to try
+
+CV.h=(1:m)*0     ###CV criteria
+################# 
+################# order the data
+ord<-order(X)      #### order the data according to x
+X<-X[ord]          #### order the data according to x
+Y<-Y[ord]          #### order the data according to x
+
+################# Defining the estimation vector
+Ye.LP=(1:n)*0     ###The initial values
+Xs=(X-X[1])/(X[n]-X[1])*(n-1)/n+0.5/n###standardized X in [0,1]
+
+######################## Basic inputs
+cb=0.1
+I0=trunc(n*cb)  #### I0 obs will not be used for CV 
+
+############### The leave-one-out estimator 
+for(j in 1:m)
+     {h=h.all[j]
+for(i in 1:n)
+    {X0=Xs[i]  ### The X point at which to estimate
+    #### Define X and Y without the i-th obs.
+     n1=i-1; n2=i+1; n3=n-1
+     if(i==1){Xm1=Xs[2:n]; Ym1=Y[2:n]}
+     if(i==n){Xm1=Xs[1:n3]; Ym1=Y[1:n3]}
+     if(i>1 && i<n){Xm1=c(Xs[1:n1], Xs[n2:n]); Ym1=c(Y[1:n1], Y[n2:n])}
+
+   #### Kernel estimator based on Xm1, Ym1
+     Xi=Xm1[abs(Xm1-X0)<h]-X0###Taking the localized values of X
+     Yi=Ym1[abs(Xm1-X0)<h]   ###Taking the localized values of Y
+     u=Xi/h                  ###Taking u for the kernel function
+     WK=(1-u^2)^mu.K         ###Calculating the non-standardized weights
+    #### Local polynomial based lm
+        if(p==1){Ye.LP[i]=lm(Yi~Xi, weights=WK)$coefficients[1]}
+        if(p==2){Ye.LP[i]=lm(Yi~Xi+I(Xi^2), weights=WK)$coefficients[1]}
+        if(p==3){Ye.LP[i]=lm(Yi~Xi+I(Xi^2)+I(Xi^3), weights=WK)$coefficients[1]}
+    }
+     rj=Y-Ye.LP
+     I1=I0+1; I2=n-I0
+     CV.h[j]=sum(rj[I1:I2]**2)
+    }
+   h.rel=h.all[CV.h==min(CV.h)]    #### The optimal bandwidth
+########## End of the main calculation
+
+################# Defining the estimation vector
+Ye=(1:n)*0        ###The initial values
+h=h.rel*(X[n]-X[1]) ###Final smoothing using the selected bandwidth
+
+############### The main calculation 
+for(i in 1:n)
+    {X0=X[i]  ### The X point at which to estimate
+     Xi=X[abs(X-X0)<h]-X0###Taking the localized and centralized values of X
+     Yi=Y[abs(X-X0)<h]   ###Taking the localized values of Y
+     u=Xi/h             ###Taking u for the kernel function
+     WK=(1-u^2)^mu.K     ###Calculating the weights (standardization not necessary)
+    #### Local polynomial based lm
+        if(p==1){Ye[i]=lm(Yi~Xi, weights=WK)$coefficients[1]}
+        if(p==2){Ye[i]=lm(Yi~Xi+I(Xi^2), weights=WK)$coefficients[1]}
+        if(p==3){Ye[i]=lm(Yi~Xi+I(Xi^2)+I(Xi^3), weights=WK)$coefficients[1]}
+     }
+########## All outputs -- X, Y odered according to X
+     results=list(X=X, Y=Y, Ye=Ye, h.opt=h, h.rel=h.rel, h.all=h.all, CV.h=CV.h)
+   #### output the results  
+     drop(results)
+ }
